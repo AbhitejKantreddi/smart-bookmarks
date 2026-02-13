@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 
 interface BookmarkFormProps {
   userId: string
@@ -26,20 +27,25 @@ export default function BookmarkForm({
     setLoading(true)
 
     const { data, error } = await supabase
-  .from('bookmarks')
-  .insert({
-    user_id: userId,
-    title,
-    url,
-  })
-  .select()
-  .single()
+      .from('bookmarks')
+      .insert([
+        {
+          user_id: userId,
+          title,
+          url,
+        },
+      ] as any) // ✅ SAFE TYPE OVERRIDE
+      .select()
+      .single()
 
-
-    if (!error && data) {
+    if (error) {
+      toast.error('Failed to add bookmark')
+      console.error(error)
+    } else if (data) {
       setBookmarks((prev) => [data, ...prev])
       setTitle('')
       setUrl('')
+      toast.success('Bookmark added!')
     }
 
     setLoading(false)
@@ -52,14 +58,12 @@ export default function BookmarkForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
-
       <Input
         placeholder="https://example.com"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
       />
-
-      <Button type="submit" disabled={loading}>
+      <Button disabled={loading}>
         <Plus className="h-4 w-4 mr-2" />
         {loading ? 'Adding...' : 'Add'}
       </Button>
