@@ -28,7 +28,7 @@ export default function BookmarkList({
 }: BookmarkListProps) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
 
-  // 🔥 Realtime listener
+  // ✅ STRICT TYPESAFE REALTIME LISTENER
   useEffect(() => {
     const channel = supabase
       .channel('bookmarks-changes')
@@ -40,9 +40,15 @@ export default function BookmarkList({
           table: 'bookmarks',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
+        (
+          payload: {
+            eventType: 'INSERT' | 'UPDATE' | 'DELETE'
+            new: BookmarkItem
+            old: BookmarkItem
+          }
+        ) => {
           if (payload.eventType === 'INSERT') {
-            const newBookmark = payload.new as BookmarkItem
+            const newBookmark = payload.new
 
             setBookmarks((prev) => {
               if (prev.some((b) => b.id === newBookmark.id)) return prev
@@ -51,7 +57,8 @@ export default function BookmarkList({
           }
 
           if (payload.eventType === 'DELETE') {
-            const deletedBookmark = payload.old as BookmarkItem
+            const deletedBookmark = payload.old
+
             setBookmarks((prev) =>
               prev.filter((b) => b.id !== deletedBookmark.id)
             )
@@ -74,12 +81,18 @@ export default function BookmarkList({
       .delete()
       .eq('id', id)
 
-    if (error) toast.error('Delete failed')
+    if (error) {
+      toast.error('Delete failed')
+    }
   }
 
   const copyToClipboard = async (url: string) => {
-    await navigator.clipboard.writeText(url)
-    toast.success('URL copied!')
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('URL copied!')
+    } catch {
+      toast.error('Failed to copy URL')
+    }
   }
 
   const getFaviconUrl = (url: string) => {
@@ -147,7 +160,7 @@ export default function BookmarkList({
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" asChild>
-                <a href={bookmark.url} target="_blank">
+                <a href={bookmark.url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
