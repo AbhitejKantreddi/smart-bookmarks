@@ -1,4 +1,5 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerClient } from '@/lib/supabase-server'
+
 import AuthButton from '@/components/AuthButton'
 import BookmarksClient from '@/components/BookmarksClient'
 import { Sparkles, Zap, Shield, Globe } from 'lucide-react'
@@ -6,7 +7,8 @@ import { Sparkles, Zap, Shield, Globe } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createServerClient()
+
 
   const {
     data: { user },
