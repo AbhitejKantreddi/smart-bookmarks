@@ -5,11 +5,10 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { toast } from 'sonner'
 
 interface BookmarkFormProps {
   userId: string
-  setBookmarks: any
+  setBookmarks: React.Dispatch<React.SetStateAction<any[]>>
 }
 
 export default function BookmarkForm({
@@ -22,35 +21,35 @@ export default function BookmarkForm({
 
   const supabase = createBrowserSupabaseClient()
 
-  const { data, error } = await supabase
-  .from('bookmarks')
-  .insert([
-    {
-      user_id: userId,
-      title,
-      url,
-    } as any,
-  ])
-  .select()
-  .single()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
 
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .insert([
+        {
+          user_id: userId,
+          title,
+          url,
+        } as any,
+      ])
+      .select()
+      .single()
 
     if (!error && data) {
-      setBookmarks((prev: any) => [data, ...prev])
+      setBookmarks((prev) => [data, ...prev])
       setTitle('')
       setUrl('')
-      toast.success('Bookmark added!')
-    } else {
-      toast.error('Failed to add bookmark')
     }
 
     setLoading(false)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-4">
+    <form onSubmit={handleSubmit} className="flex gap-4">
       <Input
-        placeholder="Bookmark title"
+        placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
@@ -61,8 +60,8 @@ export default function BookmarkForm({
         onChange={(e) => setUrl(e.target.value)}
       />
 
-      <Button disabled={loading} className="gap-2">
-        <Plus className="h-4 w-4" />
+      <Button type="submit" disabled={loading}>
+        <Plus className="h-4 w-4 mr-2" />
         {loading ? 'Adding...' : 'Add'}
       </Button>
     </form>
