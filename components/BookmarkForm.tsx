@@ -26,16 +26,15 @@ export default function BookmarkForm({
     setLoading(true)
 
     const { data, error } = await supabase
-      .from('bookmarks')
-      .insert([
-        {
-          user_id: userId,
-          title,
-          url,
-        } as any,
-      ])
-      .select()
-      .single()
+  .from('bookmarks')
+  .insert({
+    user_id: userId,
+    title,
+    url,
+  })
+  .select()
+  .single()
+
 
     if (!error && data) {
       setBookmarks((prev) => [data, ...prev])
