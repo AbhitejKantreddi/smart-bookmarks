@@ -1,3 +1,3 @@
-export type { Database } from '@/types/database';
-export { createBrowserClient } from './supabase-browser';
-export { createServerClient } from './supabase-server';
+export type { Database } from '@/types/database'
+export { createBrowserSupabaseClient } from './supabase-browser'
+export { createServerSupabaseClient } from './supabase-server'
