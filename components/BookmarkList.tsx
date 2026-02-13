@@ -28,44 +28,38 @@ export default function BookmarkList({
 }: BookmarkListProps) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
 
-  // ✅ STRICT TYPESAFE REALTIME LISTENER
   useEffect(() => {
-    const channel = supabase
-      .channel('bookmarks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bookmarks',
-          filter: `user_id=eq.${userId}`,
-        },
-        (
-          payload: {
-            eventType: 'INSERT' | 'UPDATE' | 'DELETE'
-            new: BookmarkItem
-            old: BookmarkItem
-          }
-        ) => {
-          if (payload.eventType === 'INSERT') {
-            const newBookmark = payload.new
+    const channel = supabase.channel('bookmarks-changes')
 
-            setBookmarks((prev) => {
-              if (prev.some((b) => b.id === newBookmark.id)) return prev
-              return [newBookmark, ...prev]
-            })
-          }
+    channel.on(
+      'postgres_changes' as any, // ✅ FIX overload issue
+      {
+        event: '*',
+        schema: 'public',
+        table: 'bookmarks',
+        filter: `user_id=eq.${userId}`,
+      },
+      (payload: any) => {
+        if (payload.eventType === 'INSERT') {
+          const newBookmark = payload.new as BookmarkItem
 
-          if (payload.eventType === 'DELETE') {
-            const deletedBookmark = payload.old
-
-            setBookmarks((prev) =>
-              prev.filter((b) => b.id !== deletedBookmark.id)
-            )
-          }
+          setBookmarks((prev) => {
+            if (prev.some((b) => b.id === newBookmark.id)) return prev
+            return [newBookmark, ...prev]
+          })
         }
-      )
-      .subscribe()
+
+        if (payload.eventType === 'DELETE') {
+          const deletedBookmark = payload.old as BookmarkItem
+
+          setBookmarks((prev) =>
+            prev.filter((b) => b.id !== deletedBookmark.id)
+          )
+        }
+      }
+    )
+
+    channel.subscribe()
 
     return () => {
       supabase.removeChannel(channel)
@@ -73,7 +67,6 @@ export default function BookmarkList({
   }, [userId, supabase, setBookmarks])
 
   const handleDelete = async (id: string) => {
-    // Optimistic UI
     setBookmarks((prev) => prev.filter((b) => b.id !== id))
 
     const { error } = await supabase
@@ -81,18 +74,12 @@ export default function BookmarkList({
       .delete()
       .eq('id', id)
 
-    if (error) {
-      toast.error('Delete failed')
-    }
+    if (error) toast.error('Delete failed')
   }
 
   const copyToClipboard = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url)
-      toast.success('URL copied!')
-    } catch {
-      toast.error('Failed to copy URL')
-    }
+    await navigator.clipboard.writeText(url)
+    toast.success('URL copied!')
   }
 
   const getFaviconUrl = (url: string) => {
@@ -160,7 +147,7 @@ export default function BookmarkList({
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" asChild>
-                <a href={bookmark.url} target="_blank" rel="noopener noreferrer">
+                <a href={bookmark.url} target="_blank">
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
